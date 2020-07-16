@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This module provides functionality to keep a system state as active.
-
-Prevents Windows from turning the display off and setting the system state to idle
+# This module provides functionality to keep a system state as active.
+# Prevents Windows from turning the display off and setting the system state to idle
 """
 
 # imports
@@ -11,11 +10,11 @@ from ctypes import windll
 import time
 import os
 
-# variables with simple values
+# constants with simple values
 ES_CONTINUOUS = 0x80000000          # state being set should remain in effect until the next call with ES_CONTINUOUS
 ES_DISPLAY_REQUIRED = 0x00000002    # Forces the display to be on by resetting the display idle timer
 ES_SYSTEM_REQUIRED = 0x00000001     # Forces the system to be in the working state by resetting the system idle timer
-sleep_time = 45                   # Time (in sec) for main loop to sleep for
+TIME_TO_SLEEP = 45                  # Time (in sec) for main loop to sleep for
 
 
 def keep_system_active():
@@ -43,15 +42,18 @@ def bring_to_normal():
     if os.name == 'nt':
         windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
 
+def move_mouse():
+	""" Generates a mouse event """
+	windll.user32.mouse_event(0x0001, 0, 0, 0, None)
+
 
 if __name__ == '__main__':
 
-    keep_system_and_display_active()
-
-    while True:
-        try:
-            time.sleep(sleep_time)      # Yield CPU resource
-        except Exception:
-            # Bring back to normal state i.e. thread not keeping system or display active
-            bring_to_normal()
-            break
+    try:
+        while True:
+            time.sleep(TIME_TO_SLEEP)      # Yield CPU resource
+            keep_system_and_display_active()
+            move_mouse()
+    except KeyboardInterrupt:
+        bring_to_normal()
+        pass
